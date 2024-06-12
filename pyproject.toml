@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "ml-service using fastapi, celery, rabbitmq, redis"
+version = "0.1.0"
+description = ""
+authors = ["ivan golt <102701882+ivangolt@users.noreply.github.com>"]
+readme = "README.md"
+packages = [{include = "ml_service using fastapi, celery, rabbitmq, redis"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[tool.poetry.group.prod.dependencies]
+transformers = "^4.41.2"
+fastapi = "^0.111.0"
+uvicorn = "^0.30.1"
+loguru = "^0.7.2"
+celery = "^5.4.0"
+rabbitmq = "^0.2.0"
+redis = "^5.0.5"
+torch = "^2.3.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
