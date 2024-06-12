@@ -1,31 +1,74 @@
-version: "3.8"
+version: "3.9"
 
 services:
-  fastapi:
-    build:
-      context: .
-      dockerfile: .docker/Dockerfile.api
-    ports:
-      - "7007:8000"
-    depends_on:
-      - rabbitmq
-      - worker 
-      - redis
 
-  worker:
-    build:
-      context: .
-      dockerfile: .docker/Dockerfile.worker 
-    depends_on:
-      - rabbitmq
-      
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "15672:15672"  # RabbitMQ management UI
-      - "5672:5672"    # RabbitMQ server port
+    # Application
+    mlapp:
+        build:
+            context: .
+            dockerfile: src/Dockerfile
+        command: ["sh", "-c", "poetry run uvicorn src.app:app --host 0.0.0.0 --port 8000"]
+        volumes:
+            - ./src:/app/src
+        depends_on:
+            celery-worker:
+                condition: service_started
+            redis:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        ports:
+            - 8000:8000
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:8000/heathcheck/"]
+            interval: 20s
+            timeout: 10s
+            retries: 5
 
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
+    # Celery worker
+    celery-worker:
+        build:
+            context: .
+            dockerfile: src/Dockerfile
+        command: ["sh", "-c", "poetry run celery -A src.celery.worker.celery worker --loglevel=info --logfile=/logs/celery.log"]
+        volumes:
+            - ./src:/app/src
+            - ./.logs:/logs
+        depends_on:
+            redis:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+ 
+    # Redis
+    redis:
+        image: redis:7.0.15-alpine
+        hostname: redis
+        expose:
+            - 6379
+        healthcheck:
+            test: ["CMD-SHELL", "redis-cli ping"]
+            interval: 20s
+            timeout: 10s
+            retries: 5
+
+    # RabbitMQ
+    rabbitmq:
+        image: rabbitmq:3.13.3-management-alpine
+        hostname: rabbitmq3
+        environment:
+            - RABBITMQ_DEFAULT_USER=guest
+            - RABBITMQ_DEFAULT_PASS=guest
+        ports:
+            - 15672:15672
+        expose:
+            - 5672
+        healthcheck:
+            test: ["CMD", "rabbitmqctl", "status"]
+            interval: 20s
+            timeout: 10s
+            retries: 5
+
+networks:
+    default:
+        name: bagel

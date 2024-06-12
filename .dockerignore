@@ -1,0 +1,5 @@
+.git
+.backup
+.logs
+.ruff_cache
+**/__pycache__

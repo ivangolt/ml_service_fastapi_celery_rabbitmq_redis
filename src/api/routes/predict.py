@@ -4,9 +4,8 @@
 
 from fastapi import APIRouter, BackgroundTasks
 
+from src.celery.celery_init import celery
 from src.models.requests import PredictionResult, TextRequest
-from src.services.utils import print_logger_info
-from src.worker.predict_worker import celery_app
 
 router = APIRouter()
 
@@ -14,7 +13,7 @@ router = APIRouter()
 @router.post("/predict/", response_model=PredictionResult, name="requests")
 async def predict_text_tone(
     text_request: TextRequest, background_tasks: BackgroundTasks
-):
+) -> PredictionResult:
     """Predict tonality of text
 
     Args:
@@ -25,13 +24,7 @@ async def predict_text_tone(
 
 
     """
-    task = celery_app.send_task("predict", args=[text_request.text])
-    result = task.get(timeout=30)
-
-    background_tasks.add_task(
-        print_logger_info,
-        text_request.text,
-        result,
-    )
+    task = celery.send_task("analyze_tonality", args=[text_request.text])
+    result = task.get(timeout=60)
 
     return result
