@@ -21,10 +21,10 @@ When launched, the application initializes FastAPI, which handles HTTP requests.
     │       ├── healthcheck.py  # Route to check the srvice status
     │       ├── predict.py      # Route for model predictions
     │       └── router.py       # Main router
-    ├── schemas                 # Package with data models
+    ├── celery                  # Package with data models
     │   ├── __init__.py
-    │   ├── healthcheck.py      # Model for service state responses
-    │   └── requests.py         # Model for input requests to the API
+    │   ├── celery_init.py      # Celery initializing
+    │   └── worker.py           # Celery worker
     └── services                # Package with ML model
         ├── __init__.py
         ├── model.py            # ML model with prediction
