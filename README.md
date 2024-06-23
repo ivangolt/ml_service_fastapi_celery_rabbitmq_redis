@@ -6,6 +6,14 @@ Example The ML service is a web application that provides an API for interacting
 
 When launched, the application initializes FastAPI, which handles HTTP requests. The app also connects to the machine learning model and loads it into memory for use in making predictions.
 
+## Operational logic
+
+- Client sends HTTP request with text data in json to FastAPI asynchronous endpoint.
+- FastAPI receives the request, validates it and creates a new Celery task.
+- Celery places the task in the queue of the RabbitMQ broker running "under the bonnet".
+- The Celery Worker retrieves the task from the RabbitMQ queue, then sends the request to the ML model, receives the response, and returns the result.
+- Redis is used to cache intermediate results and speed up repeated queries with the same data.
+- The response is returned via RabbitMQ to FastAPI, which sends it back to the client as an HTTP response.
 ```
 .
 ├── .docker
